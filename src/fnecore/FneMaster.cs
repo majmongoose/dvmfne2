@@ -734,7 +734,6 @@ namespace fnecore
 #if DEBUG
                                                 Log(LogLevel.DEBUG, $"{systemName} P25D: SRC_PEER {peerId} SRC_ID {srcId} DST_ID {dstId} [STREAM ID {streamId}] PKT SEQ {rtpHeader.Sequence}");
 #endif
-
                                                 // are we repeating to connected peers?
                                                 if (Repeat && !NoRepeatP25)
                                                 {
@@ -796,7 +795,6 @@ namespace fnecore
 #if DEBUG
                                                 Log(LogLevel.DEBUG, $"{systemName} NXDD: SRC_PEER {peerId} SRC_ID {srcId} DST_ID {dstId} [STREAM ID {streamId}] PKT SEQ {rtpHeader.Sequence}");
 #endif
-
                                                 // are we repeating to connected peers?
                                                 if (Repeat && !NoRepeatNXDN)
                                                 {

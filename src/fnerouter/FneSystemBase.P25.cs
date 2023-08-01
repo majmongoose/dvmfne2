@@ -85,7 +85,10 @@ namespace fnerouter
 
             // always validate a terminator if the source is valid
             if ((duid == P25DUID.TDU) || (duid == P25DUID.TDULC))
-                return true;
+            {
+                if (dstId != 0 && rules.SendTgid && (activeTGIDs.Find((x) => x.Source.Tgid == dstId) == null))
+                    return false;
+            }
 
             if (callType == CallType.GROUP)
             {
