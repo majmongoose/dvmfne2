@@ -120,11 +120,25 @@ namespace fnerouter
                     whitelist = LoadRadioIDFile(Program.Configuration.Rids.WhitelistRIDFile);
                 }
 
+                // ensure the whitelist object is initialized
+                if (whitelist == null)
+                {
+                    Log.Logger.Error($"[Router Service] Failed to initialize the RID whitelist!");
+                    whitelist = new List<RadioID>();
+                }
+
                 // load blacklist
                 if (Program.Configuration.Rids.BlacklistRIDFile != null)
                 {
                     Log.Logger.Information($"[Router Service] LOADING WHITELIST RIDS {Program.Configuration.Rids.BlacklistRIDFile}");
                     blacklist = LoadRadioIDFile(Program.Configuration.Rids.BlacklistRIDFile);
+                }
+
+                // ensure the blacklist object is initialized
+                if (blacklist == null)
+                {
+                    Log.Logger.Error($"[Router Service] Failed to initialize the RID blacklist!");
+                    blacklist = new List<RadioID>();
                 }
 
                 lastRIDListUpdate = DateTime.Now;
