@@ -56,6 +56,7 @@ namespace fnerouter
 
         private DateTime activityLogSplitUpdate = DateTime.Now;
         private FileStream activityLog = null;
+        private object actLogLock = new object();
         private Dictionary<uint, FileStream> peerDiagLog = new Dictionary<uint, FileStream>();
 
         /*
@@ -289,7 +290,7 @@ namespace fnerouter
                     dt = activityLogSplitUpdate.AddSeconds(3600);
                     if (dt < DateTime.Now)
                     {
-                        lock (activityLog)
+                        lock (actLogLock)
                         {
                             string actLogPath = Path.Combine(new string[] { Program.Configuration.Log.FilePath, Program.Configuration.ActivityLogFile });
                             activityLog.Seek(0, SeekOrigin.Begin);
@@ -546,11 +547,26 @@ namespace fnerouter
             if (!Program.Configuration.AllowActTrans)
                 return;
 
-            lock (activityLog)
+            try
             {
-                TextWriter writer = new StreamWriter(activityLog);
-                writer.WriteLine($"{peerId} {message}");
-                writer.Flush();
+                lock (actLogLock)
+                {
+                    if (activityLog != null)
+                    {
+                        if (activityLog.CanWrite)
+                        {
+                            TextWriter writer = new StreamWriter(activityLog);
+                            writer.WriteLine($"{peerId} {message}");
+                            writer.Flush();
+                        }
+                        else
+                            Log.Logger.Error($"Failed to write to FNE activity log for PEER {peerId}? Log was not writable?");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Logger.Error(e.Message);
             }
         }
 
@@ -609,9 +625,24 @@ namespace fnerouter
                 return;
             }
 
-            TextWriter writer = new StreamWriter(peerDiagLog[peerId]);
-            writer.WriteLine($"{peerId} {message}");
-            writer.Flush();
+            try
+            {
+                if (peerDiagLog[peerId] != null)
+                {
+                    if (peerDiagLog[peerId].CanWrite)
+                    {
+                        TextWriter writer = new StreamWriter(peerDiagLog[peerId]);
+                        writer.WriteLine($"{peerId} {message}");
+                        writer.Flush();
+                    }
+                    else
+                        Log.Logger.Error($"Failed to write to FNE peer diagnostics log for PEER {peerId}? Log was not writable?");
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Logger.Error(e.Message);
+            }
         }
 
         /// <summary>
