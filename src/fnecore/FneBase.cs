@@ -205,8 +205,9 @@ namespace fnecore
     /// <param name="frameType">Frame Type</param>
     /// <param name="dataType">DMR Data Type</param>
     /// <param name="streamId">Stream ID</param>
+    /// <param name="message">Raw message data</param>
     /// <returns>True, if data stream is valid, otherwise false.</returns>
-    public delegate bool DMRDataValidate(uint peerId, uint srcId, uint dstId, byte slot, CallType callType, FrameType frameType, DMRDataType dataType, uint streamId);
+    public delegate bool DMRDataValidate(uint peerId, uint srcId, uint dstId, byte slot, CallType callType, FrameType frameType, DMRDataType dataType, uint streamId, byte[] message);
     /// <summary>
     /// Event used to process incoming DMR data.
     /// </summary>
@@ -310,8 +311,9 @@ namespace fnecore
     /// <param name="duid">P25 DUID</param>
     /// <param name="frameType">Frame Type</param>
     /// <param name="streamId">Stream ID</param>
+    /// <param name="message">Raw message data</param>
     /// <returns>True, if data stream is valid, otherwise false.</returns>
-    public delegate bool P25DataValidate(uint peerId, uint srcId, uint dstId, CallType callType, P25DUID duid, FrameType frameType, uint streamId);
+    public delegate bool P25DataValidate(uint peerId, uint srcId, uint dstId, CallType callType, P25DUID duid, FrameType frameType, uint streamId, byte[] message);
     /// <summary>
     /// Event used to process incoming P25 data.
     /// </summary>
@@ -403,8 +405,9 @@ namespace fnecore
     /// <param name="messageType">NXDN Message Type</param>
     /// <param name="frameType">Frame Type</param>
     /// <param name="streamId">Stream ID</param>
+    /// <param name="message">Raw message data</param>
     /// <returns>True, if data stream is valid, otherwise false.</returns>
-    public delegate bool NXDNDataValidate(uint peerId, uint srcId, uint dstId, CallType callType, NXDNMessageType messageType, FrameType frameType, uint streamId);
+    public delegate bool NXDNDataValidate(uint peerId, uint srcId, uint dstId, CallType callType, NXDNMessageType messageType, FrameType frameType, uint streamId, byte[] message);
     /// <summary>
     /// Event used to process incoming NXDN data.
     /// </summary>

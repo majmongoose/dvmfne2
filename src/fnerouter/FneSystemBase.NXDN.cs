@@ -49,8 +49,9 @@ namespace fnerouter
         /// <param name="messageType">NXDN Message Type</param>
         /// <param name="frameType">Frame Type</param>
         /// <param name="streamId">Stream ID</param>
+        /// <param name="message">Raw message data</param>
         /// <returns>True, if data stream is valid, otherwise false.</returns>
-        protected virtual bool NXDNDataValidate(uint peerId, uint srcId, uint dstId, CallType callType, NXDNMessageType messageType, FrameType frameType, uint streamId)
+        protected virtual bool NXDNDataValidate(uint peerId, uint srcId, uint dstId, CallType callType, NXDNMessageType messageType, FrameType frameType, uint streamId, byte[] message)
         {
             DateTime pktTime = DateTime.Now;
 
@@ -58,25 +59,28 @@ namespace fnerouter
             if (nxdnCalls.ContainsKey(dstId)) 
                 status = nxdnCalls[dstId];
 
-            if (service.Blacklist.Find((x) => x.Id == srcId) != null)
+            if (service.Blacklist != null)
             {
-                if (streamId == status.RxStreamId)
+                if (service.Blacklist.Find((x) => x.Id == srcId) != null)
                 {
-                    // mark status variables for use later
-                    status.RxStart = pktTime;
-                    status.RxPeerId = peerId;
-                    status.RxRFS = srcId;
-                    status.RxType = frameType;
-                    status.RxTGId = dstId;
-                    status.RxStreamId = streamId;
+                    if (streamId == status.RxStreamId)
+                    {
+                        // mark status variables for use later
+                        status.RxStart = pktTime;
+                        status.RxPeerId = peerId;
+                        status.RxRFS = srcId;
+                        status.RxType = frameType;
+                        status.RxTGId = dstId;
+                        status.RxStreamId = streamId;
 
-                    Log.Logger.Warning($"({SystemName}) NXDD: Traffic *REJECT ACL      * PEER {peerId} SRC_ID {srcId} DST_ID {dstId} [STREAM ID {streamId}] (Blacklisted RID)");
-    
-                    // TODO TODO TODO
-                    FneReporter.sendReport(new Dictionary<string,string> { {"SystemName",SystemName},{"PEER",peerId.ToString()},{"SRC_ID",srcId.ToString()},{"DST_ID",dstId.ToString()},{"STREAM ID",streamId.ToString()},{"Value","BLACKLISTED_RID"}});
+                        Log.Logger.Warning($"({SystemName}) NXDD: Traffic *REJECT ACL      * PEER {peerId} SRC_ID {srcId} DST_ID {dstId} [STREAM ID {streamId}] (Blacklisted RID)");
+
+                        // TODO TODO TODO
+                        FneReporter.sendReport(new Dictionary<string, string> { { "SystemName", SystemName }, { "PEER", peerId.ToString() }, { "SRC_ID", srcId.ToString() }, { "DST_ID", dstId.ToString() }, { "STREAM ID", streamId.ToString() }, { "Value", "BLACKLISTED_RID" } });
+                    }
+
+                    return false;
                 }
-
-                return false;
             }
 
             // always validate a terminator if the source is valid

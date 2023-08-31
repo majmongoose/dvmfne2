@@ -49,8 +49,9 @@ namespace fnerouter
         /// <param name="duid">P25 DUID</param>
         /// <param name="frameType">Frame Type</param>
         /// <param name="streamId">Stream ID</param>
+        /// <param name="message">Raw message data</param>
         /// <returns>True, if data stream is valid, otherwise false.</returns>
-        protected virtual bool P25DataValidate(uint peerId, uint srcId, uint dstId, CallType callType, P25DUID duid, FrameType frameType, uint streamId)
+        protected virtual bool P25DataValidate(uint peerId, uint srcId, uint dstId, CallType callType, P25DUID duid, FrameType frameType, uint streamId, byte[] message)
         {
             DateTime pktTime = DateTime.Now;
 
@@ -58,25 +59,28 @@ namespace fnerouter
             if (p25Calls.ContainsKey(dstId)) 
                 status = p25Calls[dstId];
 
-            if (service.Blacklist.Find((x) => x.Id == srcId) != null)
+            if (service.Blacklist != null)
             {
-                if (streamId == status.RxStreamId)
+                if (service.Blacklist.Find((x) => x.Id == srcId) != null)
                 {
-                    // mark status variables for use later
-                    status.RxStart = pktTime;
-                    status.RxPeerId = peerId;
-                    status.RxRFS = srcId;
-                    status.RxType = frameType;
-                    status.RxTGId = dstId;
-                    status.RxStreamId = streamId;
+                    if (streamId == status.RxStreamId)
+                    {
+                        // mark status variables for use later
+                        status.RxStart = pktTime;
+                        status.RxPeerId = peerId;
+                        status.RxRFS = srcId;
+                        status.RxType = frameType;
+                        status.RxTGId = dstId;
+                        status.RxStreamId = streamId;
 
-                    Log.Logger.Warning($"({SystemName}) P25D: Traffic *REJECT ACL      * PEER {peerId} SRC_ID {srcId} DST_ID {dstId} DUID {duid} [STREAM ID {streamId}] (Blacklisted RID)");
-                    // send report to monitor server
-                    FneReporter.sendReport(new Dictionary<string,string> { {"SystemName",SystemName},{"PEER",peerId.ToString()},{"SRC_ID",srcId.ToString()},{"DST_ID",dstId.ToString()},{"DUID",duid.ToString()},{"STREAM ID",streamId.ToString()},{"Value","CALL_REJECT_ACL"}});
-                    
+                        Log.Logger.Warning($"({SystemName}) P25D: Traffic *REJECT ACL      * PEER {peerId} SRC_ID {srcId} DST_ID {dstId} DUID {duid} [STREAM ID {streamId}] (Blacklisted RID)");
+                        // send report to monitor server
+                        FneReporter.sendReport(new Dictionary<string, string> { { "SystemName", SystemName }, { "PEER", peerId.ToString() }, { "SRC_ID", srcId.ToString() }, { "DST_ID", dstId.ToString() }, { "DUID", duid.ToString() }, { "STREAM ID", streamId.ToString() }, { "Value", "CALL_REJECT_ACL" } });
+
+                    }
+
+                    return false;
                 }
-
-                return false;
             }
 
             // always validate a TSDU or PDU if the source is valid

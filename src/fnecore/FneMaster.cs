@@ -657,7 +657,7 @@ namespace fnecore
                                             // is the stream valid?
                                             bool ret = true;
                                             if (DMRDataValidate != null)
-                                                ret = DMRDataValidate(peerId, srcId, dstId, slot, callType, frameType, dataType, streamId);
+                                                ret = DMRDataValidate(peerId, srcId, dstId, slot, callType, frameType, dataType, streamId, message);
 
                                             if (ret)
                                             {
@@ -716,7 +716,7 @@ namespace fnecore
                                             // is the stream valid?
                                             bool ret = true;
                                             if (P25DataValidate != null)
-                                                ret = P25DataValidate(peerId, srcId, dstId, callType, duid, frameType, streamId);
+                                                ret = P25DataValidate(peerId, srcId, dstId, callType, duid, frameType, streamId, message);
 
                                             if (ret)
                                             {
@@ -780,7 +780,7 @@ namespace fnecore
                                             // is the stream valid?
                                             bool ret = true;
                                             if (NXDNDataValidate != null)
-                                                ret = NXDNDataValidate(peerId, srcId, dstId, callType, messageType, frameType, streamId);
+                                                ret = NXDNDataValidate(peerId, srcId, dstId, callType, messageType, frameType, streamId, message);
 
                                             if (ret)
                                             {
