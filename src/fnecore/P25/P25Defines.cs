@@ -29,6 +29,8 @@ namespace fnecore.P25
     /// </summary>
     public class P25DFSI
     {
+        public const byte P25_RTP_PAYLOAD_TYPE = 100;
+
         public const uint P25_DFSI_LDU1_VOICE1_FRAME_LENGTH_BYTES = 22;
         public const uint P25_DFSI_LDU1_VOICE2_FRAME_LENGTH_BYTES = 14;
         public const uint P25_DFSI_LDU1_VOICE3_FRAME_LENGTH_BYTES = 17;
@@ -63,6 +65,10 @@ namespace fnecore.P25
 
         public const byte P25_DFSI_DEF_ICW_SOURCE = 0x00;    // Infrastructure Source - Default Source
         public const byte P25_DFSI_DEF_SOURCE = 0x00;        //
+
+        public const byte P25_DFSI_MOT_START_STOP = 0x00;    // Motorola Start/Stop Frame
+        public const byte P25_DFSI_MOT_VHDR_1 = 0x60;        // Motorola Voice Header 1
+        public const byte P25_DFSI_MOT_VHDR_2 = 0x61;        // Motorola Voice Header 2
 
         public const byte P25_DFSI_LDU1_VOICE1 = 0x62;       // IMBE LDU1 - Voice 1
         public const byte P25_DFSI_LDU1_VOICE2 = 0x63;       // IMBE LDU1 - Voice 2
@@ -125,6 +131,12 @@ namespace fnecore.P25
     /// </summary>
     public class P25Defines
     {
+        public const byte P25_MFG_STANDARD = 0x00;
+
+        public const byte P25_ALGO_UNENCRYPT = 0x80;
+
+        public const byte P25_MI_LENGTH = 9;
+
         // LDUx/TDULC Link Control Opcode(s)
         public const byte LC_GROUP = 0x00;                   // GRP VCH USER - Group Voice Channel User
         public const byte LC_GROUP_UPDT = 0x02;              // GRP VCH UPDT - Group Voice Channel Update
