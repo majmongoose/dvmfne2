@@ -406,16 +406,20 @@ namespace fnerouter
             foreach (RoutingRule rule in rules)
                 foreach (RoutingRuleGroupVoice gv in rule.GroupVoice)
                 {
-                    // generate ignored string
                     string ignored = "None";
                     if (gv.Config.Ignored != null)
                     {
+                        // generate ignored string
                         if (gv.Config.Ignored.Count > 0)
                         {
                             ignored = string.Empty;
                             foreach (int peerId in gv.Config.Ignored)
                                 ignored += $"{peerId}, ";
                         }
+
+                        // does the ignored list contain 0 if this is an affiliated group?
+                        if (gv.Config.Affiliated && (gv.Config.Ignored.Count == 0 || !gv.Config.Ignored.Contains(0)))
+                            gv.Config.Ignored.Add(0);
                     }
                     ignored = ignored.TrimEnd(new char[] { ',', ' ' });
 

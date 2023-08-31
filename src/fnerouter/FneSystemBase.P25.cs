@@ -25,6 +25,7 @@ using System;
 using Serilog;
 
 using fnecore;
+using fnecore.DMR;
 using fnecore.P25;
 using System.Collections.Generic;
 
@@ -90,8 +91,23 @@ namespace fnerouter
             // always validate a terminator if the source is valid
             if ((duid == P25DUID.TDU) || (duid == P25DUID.TDULC))
             {
+                bool grantDemand = ((message[14] & 0x80) == 0x80);
+
                 if (dstId != 0 && rules.SendTgid && (activeTGIDs.Find((x) => x.Source.Tgid == dstId) == null))
                     return false;
+
+                // is this a grant demand TDU?
+                if (grantDemand)
+                {
+                    if (srcId == 0)
+                        return false;
+                    if (dstId == 0)
+                        return false;
+
+                    // perform peer ignored check for the destination
+                    if (PeerIgnored(peerId, srcId, dstId, 0, callType, frameType, (frameType == FrameType.VOICE) ? DMRDataType.VOICE_LC_HEADER : DMRDataType.TERMINATOR_WITH_LC, streamId))
+                        return false;
+                }
             }
 
             if (callType == CallType.GROUP)
