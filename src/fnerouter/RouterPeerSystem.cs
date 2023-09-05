@@ -60,10 +60,22 @@ namespace fnerouter
         private static FnePeer Create(ConfigPeerObject config)
         {
             IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, config.Port);
-            if (config.Address != null)
+
+            if (config.MasterAddress == null)
+                throw new NullReferenceException("address");
+            if (config.MasterAddress == string.Empty)
+                throw new ArgumentException("address");
+
+            // handle using address as IP or resolving from hostname to IP
+            try
             {
-                if (config.Address != string.Empty)
-                    endpoint = new IPEndPoint(IPAddress.Parse(config.Address), config.Port);
+                endpoint = new IPEndPoint(IPAddress.Parse(config.MasterAddress), config.MasterPort);
+            }
+            catch (FormatException)
+            {
+                IPAddress[] addresses = Dns.GetHostAddresses(config.MasterAddress);
+                if (addresses.Length > 0)
+                    endpoint = new IPEndPoint(addresses[0], config.MasterPort);
             }
 
             FnePeer peer = new FnePeer(config.Name, config.PeerId, endpoint);
@@ -84,10 +96,10 @@ namespace fnerouter
         /// <param name="message">Message to send</param>
         public void SendActivityTransfer(string message)
         {
-            byte[] data = new byte[message.Length];
-            FneUtils.StringToBytes(message, data, 0, message.Length);
+            byte[] data = new byte[message.Length + 11];
+            FneUtils.StringToBytes(message, data, 11, message.Length);
 
-            peer.SendMasterTagged(FneBase.CreateOpcode(Constants.NET_FUNC_TRANSFER, Constants.NET_TRANSFER_SUBFUNC_ACTIVITY), Constants.TAG_TRANSFER_ACT_LOG, data);
+            peer.SendMaster(FneBase.CreateOpcode(Constants.NET_FUNC_TRANSFER, Constants.NET_TRANSFER_SUBFUNC_ACTIVITY), data);
         }
 
         /// <summary>
@@ -96,10 +108,10 @@ namespace fnerouter
         /// <param name="message">Message to send</param>
         public void SendDiagnosticsTransfer(string message)
         {
-            byte[] data = new byte[message.Length];
-            FneUtils.StringToBytes(message, data, 0, message.Length);
+            byte[] data = new byte[message.Length + 11];
+            FneUtils.StringToBytes(message, data, 11, message.Length);
 
-            peer.SendMasterTagged(FneBase.CreateOpcode(Constants.NET_FUNC_TRANSFER, Constants.NET_TRANSFER_SUBFUNC_DIAG), Constants.TAG_TRANSFER_DIAG_LOG, data);
+            peer.SendMaster(FneBase.CreateOpcode(Constants.NET_FUNC_TRANSFER, Constants.NET_TRANSFER_SUBFUNC_DIAG), data);
         }
     } // public class RouterPeerSystem
 } // namespace fnerouter

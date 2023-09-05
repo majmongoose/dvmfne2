@@ -52,8 +52,9 @@ namespace fneparrot
         /// <param name="duid">P25 DUID</param>
         /// <param name="frameType">Frame Type</param>
         /// <param name="streamId">Stream ID</param>
+        /// <param name="message">Raw message data</param>
         /// <returns>True, if data stream is valid, otherwise false.</returns>
-        protected virtual bool P25DataValidate(uint peerId, uint srcId, uint dstId, CallType callType, P25DUID duid, FrameType frameType, uint streamId)
+        protected virtual bool P25DataValidate(uint peerId, uint srcId, uint dstId, CallType callType, P25DUID duid, FrameType frameType, uint streamId, byte[] message)
         {
             return true;
         }
@@ -109,7 +110,8 @@ namespace fneparrot
                     FneMaster master = (FneMaster)fne;
                     foreach (Tuple<byte[], ushort> pkt in p25CallData)
                     {
-                        master.SendPeersTagged(FneBase.CreateOpcode(Constants.NET_FUNC_PROTOCOL, Constants.NET_PROTOCOL_SUBFUNC_P25), Constants.TAG_P25_DATA, pkt.Item1, pkt.Item2);
+                        foreach (uint peerId in master.Peers.Keys)
+                            master.SendPeer(peerId, FneBase.CreateOpcode(Constants.NET_FUNC_PROTOCOL, Constants.NET_PROTOCOL_SUBFUNC_P25), pkt.Item1, pkt.Item2);
                         Task.Delay(120).GetAwaiter().GetResult();
                     }
                     p25CallData.Clear();

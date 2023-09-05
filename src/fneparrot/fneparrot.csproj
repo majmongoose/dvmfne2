@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <InvariantGlobalization>true</InvariantGlobalization>
     <Deterministic>False</Deterministic>
 	  <!--<PublishSingleFile>true</PublishSingleFile>-->
 	  <PublishReadyToRun>false</PublishReadyToRun>

@@ -56,6 +56,7 @@ namespace fnerouter
 
         private DateTime activityLogSplitUpdate = DateTime.Now;
         private FileStream activityLog = null;
+        private object actLogLock = new object();
         private Dictionary<uint, FileStream> peerDiagLog = new Dictionary<uint, FileStream>();
 
         /*
@@ -120,11 +121,25 @@ namespace fnerouter
                     whitelist = LoadRadioIDFile(Program.Configuration.Rids.WhitelistRIDFile);
                 }
 
+                // ensure the whitelist object is initialized
+                if (whitelist == null)
+                {
+                    Log.Logger.Error($"[Router Service] Failed to initialize the RID whitelist!");
+                    whitelist = new List<RadioID>();
+                }
+
                 // load blacklist
                 if (Program.Configuration.Rids.BlacklistRIDFile != null)
                 {
                     Log.Logger.Information($"[Router Service] LOADING WHITELIST RIDS {Program.Configuration.Rids.BlacklistRIDFile}");
                     blacklist = LoadRadioIDFile(Program.Configuration.Rids.BlacklistRIDFile);
+                }
+
+                // ensure the blacklist object is initialized
+                if (blacklist == null)
+                {
+                    Log.Logger.Error($"[Router Service] Failed to initialize the RID blacklist!");
+                    blacklist = new List<RadioID>();
                 }
 
                 lastRIDListUpdate = DateTime.Now;
@@ -135,7 +150,7 @@ namespace fnerouter
             {
                 if (masterConfig.Enabled)
                 {
-                    Log.Logger.Information($"[Router Service] MASTER: REGISTER SYSTEM {masterConfig.Name}");
+                    Log.Logger.Information($"[Router Service] MASTER: REGISTER SYSTEM {masterConfig.Name} ({masterConfig.PeerId})");
                     RouterMasterSystem system = new RouterMasterSystem(this, masterConfig);
                     systems.Add(system);
                     system.Start();
@@ -149,7 +164,22 @@ namespace fnerouter
             {
                 if (peerConfig.Enabled)
                 {
-                    Log.Logger.Information($"[Router Service] PEER: REGISTER SYSTEM {peerConfig.Name}");
+                    Log.Logger.Information($"[Router Service] PEER: REGISTER SYSTEM {peerConfig.Name} ({peerConfig.PeerId})");
+                    if (peerConfig.MasterAddress == null)
+                    {
+                        peerConfig.Enabled = false;
+                        Log.Logger.Information($"[Router Service] PEER: SYSTEM {peerConfig.Name} NOT REGISTERED (DISABLED)");
+                        Log.Logger.Error($"[Router Service] PEER: SYSTEM {peerConfig.Name} MISSING MASTER ADDRESS");
+                        continue;
+                    }
+                    if (peerConfig.MasterAddress == string.Empty)
+                    {
+                        peerConfig.Enabled = false;
+                        Log.Logger.Information($"[Router Service] PEER: SYSTEM {peerConfig.Name} NOT REGISTERED (DISABLED)");
+                        Log.Logger.Error($"[Router Service] PEER: SYSTEM {peerConfig.Name} MISSING MASTER ADDRESS");
+                        continue;
+                    }
+
                     RouterPeerSystem system = new RouterPeerSystem(this, peerConfig);
                     systems.Add(system);
                     system.Start();
@@ -260,7 +290,7 @@ namespace fnerouter
                     dt = activityLogSplitUpdate.AddSeconds(3600);
                     if (dt < DateTime.Now)
                     {
-                        lock (activityLog)
+                        lock (actLogLock)
                         {
                             string actLogPath = Path.Combine(new string[] { Program.Configuration.Log.FilePath, Program.Configuration.ActivityLogFile });
                             activityLog.Seek(0, SeekOrigin.Begin);
@@ -376,16 +406,20 @@ namespace fnerouter
             foreach (RoutingRule rule in rules)
                 foreach (RoutingRuleGroupVoice gv in rule.GroupVoice)
                 {
-                    // generate ignored string
                     string ignored = "None";
                     if (gv.Config.Ignored != null)
                     {
+                        // generate ignored string
                         if (gv.Config.Ignored.Count > 0)
                         {
                             ignored = string.Empty;
                             foreach (int peerId in gv.Config.Ignored)
                                 ignored += $"{peerId}, ";
                         }
+
+                        // does the ignored list contain 0 if this is an affiliated group?
+                        if (gv.Config.Affiliated && (gv.Config.Ignored.Count == 0 || !gv.Config.Ignored.Contains(0)))
+                            gv.Config.Ignored.Add(0);
                     }
                     ignored = ignored.TrimEnd(new char[] { ',', ' ' });
 
@@ -517,11 +551,26 @@ namespace fnerouter
             if (!Program.Configuration.AllowActTrans)
                 return;
 
-            lock (activityLog)
+            try
             {
-                TextWriter writer = new StreamWriter(activityLog);
-                writer.WriteLine($"{peerId} {message}");
-                writer.Flush();
+                lock (actLogLock)
+                {
+                    if (activityLog != null)
+                    {
+                        if (activityLog.CanWrite)
+                        {
+                            TextWriter writer = new StreamWriter(activityLog);
+                            writer.WriteLine($"{peerId} {message}");
+                            writer.Flush();
+                        }
+                        else
+                            Log.Logger.Error($"Failed to write to FNE activity log for PEER {peerId}? Log was not writable?");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Logger.Error(e.Message);
             }
         }
 
@@ -580,9 +629,24 @@ namespace fnerouter
                 return;
             }
 
-            TextWriter writer = new StreamWriter(peerDiagLog[peerId]);
-            writer.WriteLine($"{peerId} {message}");
-            writer.Flush();
+            try
+            {
+                if (peerDiagLog[peerId] != null)
+                {
+                    if (peerDiagLog[peerId].CanWrite)
+                    {
+                        TextWriter writer = new StreamWriter(peerDiagLog[peerId]);
+                        writer.WriteLine($"{peerId} {message}");
+                        writer.Flush();
+                    }
+                    else
+                        Log.Logger.Error($"Failed to write to FNE peer diagnostics log for PEER {peerId}? Log was not writable?");
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Logger.Error(e.Message);
+            }
         }
 
         /// <summary>

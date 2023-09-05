@@ -53,8 +53,9 @@ namespace fneparrot
         /// <param name="frameType">Frame Type</param>
         /// <param name="dataType">DMR Data Type</param>
         /// <param name="streamId">Stream ID</param>
+        /// <param name="message">Raw message data</param>
         /// <returns>True, if data stream is valid, otherwise false.</returns>
-        protected virtual bool DMRDataValidate(uint peerId, uint srcId, uint dstId, byte slot, CallType callType, FrameType frameType, DMRDataType dataType, uint streamId)
+        protected virtual bool DMRDataValidate(uint peerId, uint srcId, uint dstId, byte slot, CallType callType, FrameType frameType, DMRDataType dataType, uint streamId, byte[] message)
         {
             return true;
         }
@@ -130,7 +131,8 @@ namespace fneparrot
                     FneMaster master = (FneMaster)fne;
                     foreach (Tuple<byte[], ushort> pkt in dmrCallData)
                     {
-                        master.SendPeersTagged(FneBase.CreateOpcode(Constants.NET_FUNC_PROTOCOL, Constants.NET_PROTOCOL_SUBFUNC_DMR), Constants.TAG_DMR_DATA, pkt.Item1, pkt.Item2);
+                        foreach (uint peerId in master.Peers.Keys)
+                            master.SendPeer(peerId, FneBase.CreateOpcode(Constants.NET_FUNC_PROTOCOL, Constants.NET_PROTOCOL_SUBFUNC_DMR), pkt.Item1, pkt.Item2);
                         Task.Delay(60).GetAwaiter().GetResult();
                     }
                     dmrCallData.Clear();
